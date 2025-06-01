@@ -1,0 +1,12 @@
+/* Temperatura degradados */
+    .temp-cold {
+      background: linear-gradient(145deg, #0b76e0, #e1eaf3);
+    }
+
+    .temp-normal {
+      background: linear-gradient(145deg, #004d00, #00cc66);
+    }
+
+    .temp-hot {
+      background: linear-gradient(145deg, #e21111, #ffffff);
+    }

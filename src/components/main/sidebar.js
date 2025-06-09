@@ -10,9 +10,11 @@ $(document).ready(function () {
     </button>
     </div>
     <div class="p-1">
-        <div id="root_all"></div>
-        <div id="root-gabinetes" ></div>
-        <div id="root-status-bomba"></div>
-        <div id="root-voltaje"></div>
+        <div class="btn-group-vertical w-100 gap-2" role="group" aria-label="Vertical button group" id="root-groups">
+            <button type="button" class="btn btn-primary">Button</button>
+            <button type="button" class="btn btn-primary">Button</button>
+            <button type="button" class="btn btn-primary">Button</button>
+            <button type="button" class="btn btn-primary">Button</button>
+        </div>
     </div>`);
 });

@@ -5,6 +5,7 @@ import { convertTimestamp, getFechaActual } from './src/utils/timestamp.js';
 import { htmlCreateCard, htmListCard } from './src/components/main/main.js';
 import { htmlCreateNotification } from './src/components/main/Notifications.js';
 import { htmlCreateCardInfo } from './src/components/main/CardsInfo.js';
+import { getGrupos } from './src/wialon/utils/getGroups.js';
 import HighChart from './src/wialon/api/Highchart.js/index.highchart.js'
 
 const TOKEN = "74799f62945e446c599d2747895e8c651A168076E34508092DE3A89F0FA0240290E7A1E7";
@@ -19,24 +20,26 @@ export async function iniciarWialon() {
         const _gabinete = { abierto: {}, cerrado: {}, falla: {} };
         const _temperatura = { ok: {}, notOk: {}, falla: {} }
 
-        const session = await wialonSDK.init(TOKEN);
+        const session = await wialonSDK.init(TOKEN);         
         const user = session.getCurrUser();
         const resource = session.getItems('avl_resource');
-
+        const groups = session.getItems('avl_unit_group');
+        const _units_gropus = await getGrupos(groups);
+        console.log( _units_gropus );
+        
+        
         for (var i = 0; i< resource.length; i++) { // construct Select list using found resources
 		    //addEvent(res[i].getId()); // add event to any resource object
 			resource[i].addListener("messageRegistered", htmlCreateNotification); // register event when we will receive message
 	    }
 
-        console.log("Usuario:", user.getName());
+        // console.log("Usuario:", user.getName());
         // console.log( "resources", resource );
         // console.log( "resources", resource[0].getNotifications() );
 
 
         const data_units = session.getItems("avl_unit");
         const units = getInformation(data_units);
-        console.log(units);
-
 
         data_units.forEach(_unit => {
             const name = _unit.getName();
@@ -103,7 +106,7 @@ export async function iniciarWialon() {
 
         });
 
-        console.log("_units", _units);
+        // console.log("_units", _units);
         // console.log("_voltaje", _voltaje);
         // console.log("_gabinete", _gabinete);
         // console.log("_estado", _estado);

@@ -9,7 +9,11 @@ export const getSensorValues = (unit) => {
             const sens = unit.getSensor(sensor.id);            
 
             let valor = unit.calculateSensorValue(sens, lastMessage);
-            if (valor === -348201.3876) valor = 'N/A';
+            if (valor === -348201.3876){
+                valor = 'N/A';
+            } else{
+                valor = Math.abs(Math.round(valor));
+            }
             result.push({ nombre: sensor.n, valor });
         }
     }

@@ -8,7 +8,7 @@ body, html {
       height: 100vh;
     }
     .sidebar {
-      width: 300px; /*Ajustar tamaños de div*/
+      width: 400px; /*Ajustar tamaños de div*/
       background-color: #ffffff;
       position: fixed;
       top: 0;
@@ -23,7 +23,7 @@ body, html {
     }
     .main-content {
       flex-grow: 1;
-      margin-left: 300px; /*Ajustar tamaños de div*/
+      margin-left: 400px; /*Ajustar tamaños de div*/
       transition: all 0.3s ease;
       overflow-y: auto;
       padding: 1rem;

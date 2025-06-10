@@ -83,8 +83,8 @@ export const htmlCreateCard = (data) => {
                   <h5 class="card-title fw-bold fs-5 text-light mb-2">
                     <img src="${unit.icon}" class="img-thumbnail" alt="15">
                     <span class="text-light">${unit.name}</span>
-                    </h5>
-                    <p class="text-muted small mb-3">
+                  </h5>
+                  <p class="text-muted small mb-3">
                     <i class="bi bi-clock me-1 text-light"></i> 
                     <span class="text-light">Último mensaje: ${unit.dateParsed}</span>
                   </p>

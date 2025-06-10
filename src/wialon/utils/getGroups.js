@@ -1,20 +1,27 @@
 // import { getGPS, getInfo, getPersonalizados, getSensores, getState } from "./getDevice.js";
 import { getSensorValues } from "./getSensors.js";
 import { convertTimestamp } from "../../utils/timestamp.js";
-import { GRUPOS } from "../../config/config.js";
+import { GRUPOS, GRUPOS_FILTER } from "../../config/config.js";
 const conexion = wialon.core.Session.getInstance();
 
 export const getGrupos = async ( groups ) => {
+        let _groups = {}
+        const key = Object.keys(GRUPOS_FILTER);
         await groups.forEach(group => {
-            if( GRUPOS.includes(group.getName() ) ){
-                const objeto = {
-                    info: getInfoGroup( group ),
-                    units_temp: getUnitsGroup( group ),   
+            const name_group = group.getName();
+            const _key = key.find(clave => name_group.toUpperCase().includes(clave));
+
+            if(GRUPOS_FILTER[_key]){
+                if( GRUPOS_FILTER[_key].GRUPOS.includes( name_group ) ){
+                    const objeto = {
+                        info: getInfoGroup( group ),
+                        units_temp: getUnitsGroup( group, GRUPOS_FILTER[_key].SENSOR ),   
+                    }
+                    _groups[name_group] = objeto;
                 }
-                groups[group.getName()] = objeto;
             }
-    });
-    return groups;
+        });
+    return _groups;
 }
 
 export const getInfoGroup = ( group ) =>{
@@ -26,12 +33,12 @@ export const getInfoGroup = ( group ) =>{
     }
 }
 
-export const getUnitsGroup = ( group ) =>{
-    const _units = [];
-    const _temperatura = { ok: {}, notOk: {}, falla: {} }
+export const getUnitsGroup = ( group, array_temp ) =>{
+    const _temperatura = { /*ok: {}, notOk: {}, falla: {},*/ general: {} }
     const idUnits = group.getUnits()
-
+    
     idUnits.map( element => {
+        const temps = [];
         const _unit = conexion.getItem(element);        
         const name = _unit.getName();
         const sensors = getSensorValues(_unit);
@@ -44,22 +51,24 @@ export const getUnitsGroup = ( group ) =>{
                 sensors,
                 last_message,
                 dateParsed,
-                icon
+                icon, 
             };
-
-            const temperatura = (sensors.find(s => s.nombre === "TEMPERATURA DASHBOARD")) ? sensors.find(s => s.nombre === "TEMPERATURA DASHBOARD") : 'N/A';
-            if(temperatura){
-                _units.push(unidad);
-                if(temperatura.valor >= 200){
-                    _temperatura.notOk[name] = {unidad, temperatura}
-                }else if( temperatura.valor < 200 && temperatura.valor > 0 ){
-                    _temperatura.ok[name] = {unidad, temperatura}
-                }else{
-                    _temperatura.falla[name] = {unidad, temperatura}
-
+            array_temp.map( temp => {                
+                const temperatura = (sensors.find(s => s.nombre === temp)) ? sensors.find(s => s.nombre === temp) : 'N/A';
+                if( temperatura ){
+                    temps.push( { [temperatura.nombre]: temperatura.valor } )
+                    // if(temperatura.valor >= 200){
+                    //     _temperatura.notOk[name] = {unidad, temperatura}
+                    // }else if( temperatura.valor < 200 && temperatura.valor > 0 ){
+                    //     _temperatura.ok[name] = {unidad, temperatura}
+                    // }else{
+                    //     _temperatura.falla[name] = {unidad, temperatura}
+                        
+                    // }
                 }
-            }
-    }) 
+                _temperatura.general[name] = {unidad, temps}
+            })
+        }) 
 
     return _temperatura;    
 }

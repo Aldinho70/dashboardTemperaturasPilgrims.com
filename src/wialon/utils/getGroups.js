@@ -15,7 +15,8 @@ export const getGrupos = async ( groups ) => {
                 if( GRUPOS_FILTER[_key].GRUPOS.includes( name_group ) ){
                     const objeto = {
                         info: getInfoGroup( group ),
-                        units_temp: getUnitsGroup( group, GRUPOS_FILTER[_key].SENSOR ),   
+                        units_temp: getUnitsGroup( group, GRUPOS_FILTER[_key].SENSOR ),  
+                        filter: _key 
                     }
                     _groups[name_group] = objeto;
                 }

@@ -23,7 +23,7 @@ export const htmlCreatedModuleGroups = ( data ) => {
         if (Object.prototype.hasOwnProperty.call(data, key)) {
             const _group = data[key];
             $("#root-groups").append(
-                `<div class="card shadow-lg border-0 rounded-4 bg-dark-subtle w-100 p-3" onClick="htmlCreatedCardsByGroups('${_group.info.nameGroup}')">
+                `<div class="card shadow-lg border-0 rounded-4 bg-dark-subtle w-100 p-3" onClick="htmlCreatedCardsByGroups('${_group.info.nameGroup}', '${_group.filter}')">
                     <div class="card-body d-flex align-items-center gap-3">
                         <!-- Icono -->
                         <img src="${_group.info.icon}" alt="Icono" class="img-fluid rounded-circle border border-2 border-secondary-subtle" style="width: 50px; height: 50px; object-fit: cover;">

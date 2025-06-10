@@ -1,5 +1,7 @@
 // import {units} from '../../../index.js'
 import { getFechaActual } from '../../utils/timestamp.js'
+import { GRUPOS_FILTER } from '../../config/config.js';
+
 $(document).ready(function () {
   $('#mainContent').html(`
     <span class="text-light" id="root-fecha" >Ultima actualizacion: ${getFechaActual()}<span>
@@ -70,15 +72,40 @@ $(document).ready(function () {
 `);
 });
 
-export const htmlCreateCard = (data) => {
+export const htmlCreateCard = (data, filter = '') => {
   $("#root-card").html('')
   data.map(unit => {
-    const sensorTemperatura = unit.sensors.find(s => s.nombre === "TEMPERATURA DASHBOARD");
-    if(sensorTemperatura){
+    const _temperaturas = []
+    
+    switch (filter) {
+      case 'REPARTO':
+        const sensorTemperatura = unit.sensors.find(s => s.nombre === "TEMPERATURA DASHBOARD");  
+        _temperaturas.push({ name: sensorTemperatura.nombre, subname: 'Dashboard', value : sensorTemperatura.valor})
+      break;
+      case 'CAMARAS':
+        GRUPOS_FILTER[filter].SENSOR.map( sensor => {
+          const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);  
+          _temperaturas.push({ name: sensorTemperatura.nombre, subname: sensor, value : sensorTemperatura.valor})
+        })
+        break
+        case 'REFRIGERACION':
+          GRUPOS_FILTER[filter].SENSOR.map( sensor => {
+            const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);  
+            if (sensorTemperatura) {
+              _temperaturas.push({ name: sensorTemperatura.nombre, subname: sensor, value : sensorTemperatura.valor})              
+            }          
+        })
+      break;
+      default:
+        break;
+    }
+    
+    // if(sensorTemperatura){
       $('#root-card').append(`
         <!-- Tarjeta Noria -->
             <div class="col">
-              <div class="card shadow-lg border-0 rounded-4 bg-light ${ (sensorTemperatura.valor > 200) ? 'temp-hot' : 'temp-cold' }">
+              
+              <div class="card shadow-lg border-0 rounded-4 bg-light temp-cold" }">
                 <div class="card-body">
                   <h5 class="card-title fw-bold fs-5 text-light mb-2">
                     <img src="${unit.icon}" class="img-thumbnail" alt="15">
@@ -88,13 +115,18 @@ export const htmlCreateCard = (data) => {
                     <i class="bi bi-clock me-1 text-light"></i> 
                     <span class="text-light">Último mensaje: ${unit.dateParsed}</span>
                   </p>
-                  <h1 class="text-light text-center">${sensorTemperatura.valor} °C</h1>
+                  ${ _temperaturas.map(temp => {
+                      return `
+                        <h6 class="text-light text-center">${temp.subname}</h6>
+                        <h1 class="text-light text-center">${temp.value} °C</h1>
+                      `;
+                    }).join('') }                  
                 </div>
               </div>
             </div>
         <!-- Repetir dinámicamente -->`);
     }
-  })
+  )
 }
 
 // export const htmListCard = (data) => {

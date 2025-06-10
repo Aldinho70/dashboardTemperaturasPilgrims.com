@@ -103,7 +103,7 @@ const getInfocard = (name, owner, total) => {
 
 window.getInfocard = getInfocard;
 
-const htmlCreatedCardsByGroups = ( name_group ) =>{
+const htmlCreatedCardsByGroups = ( name_group, filter ) =>{
     const _units = []
     const units = allUnits_groups[name_group] 
     for (const key in units.units_temp.general) {
@@ -111,7 +111,7 @@ const htmlCreatedCardsByGroups = ( name_group ) =>{
             const element = units.units_temp.general[key];
              _units.push(element.unidad);            
         }
-    }htmlCreateCard(_units)
+    }htmlCreateCard(_units, filter)
 }
 
 window.htmlCreatedCardsByGroups = htmlCreatedCardsByGroups;

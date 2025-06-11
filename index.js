@@ -10,6 +10,8 @@ import { getGrupos } from './src/wialon/utils/getGroups.js';
 import HighChart from './src/wialon/api/Highchart.js/index.highchart.js'
 
 const TOKEN = "74799f62945e446c599d2747895e8c651A168076E34508092DE3A89F0FA0240290E7A1E7";
+let name_group_now = 'PILGRIMS GP CAMARAS';
+let filter_now = 'CAMARAS';
 export let allUnits_groups;
 
 export async function iniciarWialon() {
@@ -104,6 +106,8 @@ const getInfocard = (name, owner, total) => {
 window.getInfocard = getInfocard;
 
 const htmlCreatedCardsByGroups = ( name_group, filter ) =>{
+    name_group_now = name_group;
+    filter_now = filter;
     const _units = []
     const units = allUnits_groups[name_group] 
     for (const key in units.units_temp.general) {
@@ -119,6 +123,6 @@ window.htmlCreatedCardsByGroups = htmlCreatedCardsByGroups;
 iniciarWialon();
 
 setInterval(() => {
-
   wialonSDK.logout(TOKEN) // ejecución cada 10 segundos
+  htmlCreatedCardsByGroups(name_group_now, filter_now)
 }, 1 * 60 * 1000);

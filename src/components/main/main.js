@@ -75,40 +75,53 @@ $(document).ready(function () {
 export const htmlCreateCard = (data, filter = '') => {
   $("#root-card").html('')
   data.map(unit => {
+    
     const _temperaturas = []
+    let class_temp = `temp-cold`
+
+    GRUPOS_FILTER[filter].SENSOR.map( sensor => {
+        const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);  
+        if (sensorTemperatura) {
+          class_temp = GRUPOS_FILTER[filter].getState( sensorTemperatura.valor )
+          _temperaturas.push({ name: sensorTemperatura.nombre, subname: sensor, value : sensorTemperatura.valor})              
+        }          
+    })
     
-    switch (filter) {
-      case 'REPARTO':
-        const sensorTemperatura = unit.sensors.find(s => s.nombre === "TEMPERATURA DASHBOARD");  
-        _temperaturas.push({ name: sensorTemperatura.nombre, subname: 'Dashboard', value : sensorTemperatura.valor})
-      break;
-      case 'CAMARAS':
-        GRUPOS_FILTER[filter].SENSOR.map( sensor => {
-          const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);  
-          _temperaturas.push({ name: sensorTemperatura.nombre, subname: sensor, value : sensorTemperatura.valor})
-        })
-        break
-        case 'REFRIGERACION':
-          GRUPOS_FILTER[filter].SENSOR.map( sensor => {
-            const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);  
-            if (sensorTemperatura) {
-              _temperaturas.push({ name: sensorTemperatura.nombre, subname: sensor, value : sensorTemperatura.valor})              
-            }          
-        })
-      break;
-      default:
-        break;
-    }
-    
-    // if(sensorTemperatura){
+    // switch (filter) {
+    //   case 'REPARTO':
+    //     GRUPOS_FILTER[filter].SENSOR.map( sensor => {
+    //       const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);  
+    //       class_temp = GRUPOS_FILTER[filter].getState( sensorTemperatura.valor )
+    //       _temperaturas.push({ name: sensorTemperatura.nombre, subname: sensor, value : sensorTemperatura.valor})
+    //     })
+    //   break;
+    //   case 'CAMARAS':
+    //     GRUPOS_FILTER[filter].SENSOR.map( sensor => {
+    //       const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);  
+    //       class_temp = GRUPOS_FILTER[filter].getState( sensorTemperatura.valor )
+    //       _temperaturas.push({ name: sensorTemperatura.nombre, subname: sensor, value : sensorTemperatura.valor})
+    //     })
+    //     break
+    //     case 'REFRIGERACION':
+    //       GRUPOS_FILTER[filter].SENSOR.map( sensor => {
+    //         const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);  
+    //         class_temp = GRUPOS_FILTER[filter].getState( sensorTemperatura.valor )
+    //         if (sensorTemperatura) {
+    //           _temperaturas.push({ name: sensorTemperatura.nombre, subname: sensor, value : sensorTemperatura.valor})              
+    //         }          
+    //     })
+    //   break;
+    //   default:
+    //     break;
+    // }
+
       $('#root-card').append(`
         <!-- Tarjeta Noria -->
             <div class="col">
-              
-              <div class="card shadow-lg border-0 rounded-4 bg-light temp-cold" }">
+              <div class="card shadow-lg border-0 rounded-4 bg-light ${class_temp} " }">
                 <div class="card-body">
                   <h5 class="card-title fw-bold fs-5 text-light mb-2">
-                    <img src="${unit.icon}" class="img-thumbnail" alt="15">
+                    <img src="${unit.icon}" alt="Icono" class="img-fluid rounded-circle " style="width: 45px; height: 45px; object-fit: cover;">
                     <span class="text-light">${unit.name}</span>
                   </h5>
                   <p class="text-muted small mb-3">
@@ -118,7 +131,7 @@ export const htmlCreateCard = (data, filter = '') => {
                   ${ _temperaturas.map(temp => {
                       return `
                         <h6 class="text-light text-center">${temp.subname}</h6>
-                        <h1 class="text-light text-center">${temp.value} °C</h1>
+                        <h1 class="text-light text-center">${(temp.value >= 200) ? `error: ${temp.value}` : `${temp.value} °C`} </h1>
                       `;
                     }).join('') }                  
                 </div>
@@ -128,62 +141,6 @@ export const htmlCreateCard = (data, filter = '') => {
     }
   )
 }
-
-// export const htmListCard = (data) => {
-//   $('#root-card').html('');
-//   console.log(data);
-//   for (const key in data) {
-//     if (Object.prototype.hasOwnProperty.call(data, key)) {
-//       const unit = data[key];
-
-//       const sensorGabinete = unit.sensors.find(s => s.nombre === "GABINETE");
-//       const sensorEstado = unit.sensors.find(s => s.nombre === "BOMBA");
-//       const voltaje = unit.sensors.find(s => s.nombre === "VOLTAJE EXTERNO");
-
-//       $('#root-card').append(`
-//          <!-- Tarjeta estilo lista -->
-// <div class="mb-3">
-//   <div class="card border-0 shadow-sm rounded-3">
-//     <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center">
-//       <div>
-//         <h5 class="fw-bold text-dark mb-1">
-//           <i class="bi bi-gear-fill me-2"></i> ${unit.name}
-//         </h5>
-//         <small class="text-muted">
-//           <i class="bi bi-clock me-1"></i> Último mensaje: ${unit.dateParsed}
-//         </small>
-//       </div>
-
-//       <ul class="list-unstyled mt-3 mt-md-0 mb-0">
-//         <li class="d-flex align-items-center mb-1">
-//           <i class="bi bi-${(sensorEstado.valor == 1) ? `toggle-on text-success` : `toggle-off text-danger`} me-2"></i>
-//           <span class="me-2">Estado:</span>
-//           <span class="fw-semibold text-${(sensorEstado.valor == 1) ? `success` : `danger`}">
-//             ${(sensorEstado.valor == 1) ? `Encendido` : `Apagado`}
-//           </span>
-//         </li>
-//         <li class="d-flex align-items-center mb-1">
-//           <i class="bi bi-${(sensorGabinete.valor != 1) ? `lock-fill text-danger` : `unlock-fill text-success`} me-2"></i>
-//           <span class="me-2">Gabinete:</span>
-//           <span class="fw-semibold text-${(sensorGabinete.valor != 1) ? `danger` : `success`}">
-//             ${(sensorGabinete.valor == 'N/A') ? `Error de sensor` : (sensorGabinete.valor) == 0 ? `Cerrado` : `Abierto`}
-//           </span>
-//         </li>
-//         <li class="d-flex align-items-center">
-//           <i class="bi bi-${(voltaje.valor != 'N/A') ? `battery-charging text-warning` : `battery text-danger`} me-2"></i>
-//           <span class="me-2">Voltaje:</span>
-//           <span class="fw-semibold text-${(voltaje.valor === 'N/A') ? `danger` : `warning`}">
-//             ${(voltaje.valor === 'N/A') ? 'Error de sensor' : voltaje.valor}
-//           </span>
-//         </li>
-//       </ul>
-//     </div>
-//   </div>
-// </div>
-// `);
-//     }
-//   }
-// }
 
 export const htmListCard = (data, name, total = 0) => {
   $('#root-list-card').html('');
@@ -248,10 +205,3 @@ export const htmListCard = (data, name, total = 0) => {
     }
   }
 };
-
-export const htmlListCardbyName = (name) => {
-  console.log(name);
-  console.log(units[name]);
-  
-  
-}

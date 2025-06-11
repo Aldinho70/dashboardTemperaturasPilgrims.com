@@ -74,8 +74,9 @@ $(document).ready(function () {
 
 export const htmlCreateCard = (data, filter = '') => {
   $("#root-card").html('');
-
   data.forEach((unit, unitIndex) => {
+    console.log(unit.tempsToday);
+    
     const _temperaturas = [];
     let class_temp = `temp-cold`;
 
@@ -126,6 +127,7 @@ export const htmlCreateCard = (data, filter = '') => {
 
       // 🔁 Programar la gráfica para renderizar después del append
       setTimeout(() => {
+        console.log(unit.tempsToday[temp.subname].tiempos);
         const dataExample = [
           { time: '00:00', temp: 22.5 },
           { time: '03:00', temp: 23.0 },
@@ -144,7 +146,8 @@ export const htmlCreateCard = (data, filter = '') => {
           },
           title: { text: null },
           xAxis: {
-            categories: dataExample.map(d => d.time),
+            // categories: dataExample.map(d => d.time),
+            categories: unit.tempsToday[temp.subname].tiempos,
             labels: { style: { color: 'black' } }
           },
           yAxis: {
@@ -153,7 +156,8 @@ export const htmlCreateCard = (data, filter = '') => {
           },
           series: [{
             name: 'Temperatura',
-            data: dataExample.map(d => d.temp),
+            // data: dataExample.map(d => d.temp),
+            data: unit.tempsToday[temp.subname].valores,
             color: 'black'
           }],
           legend: { enabled: false },

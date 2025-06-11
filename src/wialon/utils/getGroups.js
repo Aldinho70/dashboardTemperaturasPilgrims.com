@@ -6,26 +6,32 @@ import MessagesService from "./getMessages.js";
 
 const conexion = wialon.core.Session.getInstance();
 
-export const getGrupos = async ( groups ) => {
-        let _groups = {}
-        const key = Object.keys(GRUPOS_FILTER);
-        await groups.forEach(group => {
-            const name_group = group.getName();
-            const _key = key.find(clave => name_group.toUpperCase().includes(clave));
+export const getGrupos = async (groups) => {
+  const _groups = {};
+  const key = Object.keys(GRUPOS_FILTER);
 
-            if(GRUPOS_FILTER[_key]){
-                if( GRUPOS_FILTER[_key].GRUPOS.includes( name_group ) ){
-                    const objeto = {
-                        info: getInfoGroup( group ),
-                        units_temp: getUnitsGroup( group, GRUPOS_FILTER[_key].SENSOR ),  
-                        filter: _key 
-                    }
-                    _groups[name_group] = objeto;
-                }
-            }
-        });
-    return _groups;
-}
+  const promesas = groups.map(async (group) => {
+    const name_group = group.getName();
+    const _key = key.find((clave) => name_group.toUpperCase().includes(clave));
+
+    if (GRUPOS_FILTER[_key]) {
+      if (GRUPOS_FILTER[_key].GRUPOS.includes(name_group)) {
+        const objeto = {
+          info: getInfoGroup(group),
+          units_temp: await getUnitsGroup(group, GRUPOS_FILTER[_key].SENSOR),
+          filter: _key,
+        };
+        _groups[name_group] = objeto;
+      }
+    }
+  });
+
+  // Espera a que todas las promesas terminen
+  await Promise.all(promesas);
+
+  return _groups;
+};
+
 
 export const getInfoGroup = ( group ) =>{
     return {
@@ -36,48 +42,44 @@ export const getInfoGroup = ( group ) =>{
     }
 }
 
-export const getUnitsGroup = ( group, array_temp ) =>{
-    const _temperatura = { /*ok: {}, notOk: {}, falla: {},*/ general: {} }
-    const idUnits = group.getUnits()
+export const getUnitsGroup = async ( group, array_temp ) => {
+  const _temperatura = { general: {} };
+  const idUnits = group.getUnits();
+  
+  for (const element of idUnits) {
+    const temps = [];
+    const _unit = conexion.getItem(element);        
+    const name = _unit.getName();
+    const sensors = getSensorValues(_unit);
+    const icon = _unit.getIconUrl(32);
+    const last_message = _unit.getLastMessage();
+    const dateParsed = (last_message) ? convertTimestamp(last_message.t) : 0;
+
+    // Esperamos correctamente la función async
+    const tempsToday = await getMessagesbyId(_unit, array_temp);
     
-    idUnits.map( element => {
-        const temps = [];
-        const _unit = conexion.getItem(element);        
-        const name = _unit.getName();
-        const sensors = getSensorValues(_unit);
-        const icon =  _unit.getIconUrl(32);
-        const last_message = _unit.getLastMessage();
-        const dateParsed = (last_message) ? convertTimestamp(last_message.t) : 0;
+    const unidad = {
+      name,
+      sensors,
+      last_message,
+      dateParsed,
+      icon,
+      tempsToday,
+    };
 
-        getMessagesbyId( _unit, array_temp );
-        
+    array_temp.map(temp => {
+      const temperatura = sensors.find(s => s.nombre === temp);
+      if (temperatura) {
+        temps.push({ [temperatura.nombre]: temperatura.valor });
+      }
+    });
 
-        const unidad = {
-                name,
-                sensors,
-                last_message,
-                dateParsed,
-                icon, 
-            };
-            array_temp.map( temp => {   
-                const temperatura = (sensors.find(s => s.nombre === temp)) ? sensors.find(s => s.nombre === temp) : 'N/A';
-                if( temperatura ){
-                    temps.push( { [temperatura.nombre]: temperatura.valor } )
-                    // if(temperatura.valor >= 200){
-                    //     _temperatura.notOk[name] = {unidad, temperatura}
-                    // }else if( temperatura.valor < 200 && temperatura.valor > 0 ){
-                    //     _temperatura.ok[name] = {unidad, temperatura}
-                    // }else{
-                    //     _temperatura.falla[name] = {unidad, temperatura}
-                        
-                    // }
-                }
-                _temperatura.general[name] = {unidad, temps}
-            })
-        }) 
+    _temperatura.general[name] = { unidad, temps };
+  }
 
-    return _temperatura;    
-}
+  return _temperatura;
+};
+
 
 
 const getMessagesbyId = async ( unit, sensores ) =>{
@@ -88,8 +90,54 @@ const getMessagesbyId = async ( unit, sensores ) =>{
     const { messages, count } = unit_messages;
     
     let sensorsByMessages = getSensorsValueByMessages(unit, messages, sensores); 
-    console.log( name );    
-    // console.log( sensores );
-    
-    console.log( sensorsByMessages );
+    const datosProcesados = agruparTemperaturasPorSensorYHora(sensorsByMessages);
+    return datosProcesados;
+}
+
+function agruparTemperaturasPorSensorYHora(data) {
+  const resultado = {};
+
+  data.forEach(obj => {
+    const timestamp = Number(Object.keys(obj)[0]);
+    const lecturas = obj[timestamp];
+
+    // Convertir timestamp a hora redondeada (HH:00)
+    const fecha = new Date(timestamp * 1000); // asumiendo que el timestamp viene en segundos
+    const hora = `${fecha.getHours().toString().padStart(2, '0')}:00`;
+
+    lecturas.forEach(sensor => {
+      const nombre = sensor.nombre;
+      const valor = sensor.valor;
+
+      if (!resultado[nombre]) {
+        resultado[nombre] = {
+          tiempos: {},
+        };
+      }
+
+      if (!resultado[nombre].tiempos[hora]) {
+        resultado[nombre].tiempos[hora] = [];
+      }
+
+      resultado[nombre].tiempos[hora].push(valor);
+    });
+  });
+
+  // Promediar valores y transformar a array final
+  const resultadoFinal = {};
+  Object.entries(resultado).forEach(([nombre, datos]) => {
+    const tiempos = Object.keys(datos.tiempos).sort(); // ordenar por hora
+    const valores = tiempos.map(hora => {
+      const arr = datos.tiempos[hora];
+      const suma = arr.reduce((acc, val) => acc + val, 0);
+      return +(suma / arr.length).toFixed(2); // promedio con 2 decimales
+    });
+
+    resultadoFinal[nombre] = {
+      tiempos,
+      valores,
+    };
+  });
+
+  return resultadoFinal;
 }

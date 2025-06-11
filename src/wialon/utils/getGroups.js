@@ -1,7 +1,9 @@
 // import { getGPS, getInfo, getPersonalizados, getSensores, getState } from "./getDevice.js";
-import { getSensorValues } from "./getSensors.js";
+import { getSensorValues, getSensorsValueByMessages } from "./getSensors.js";
 import { convertTimestamp } from "../../utils/timestamp.js";
 import { GRUPOS, GRUPOS_FILTER } from "../../config/config.js";
+import MessagesService from "./getMessages.js";
+
 const conexion = wialon.core.Session.getInstance();
 
 export const getGrupos = async ( groups ) => {
@@ -47,6 +49,9 @@ export const getUnitsGroup = ( group, array_temp ) =>{
         const last_message = _unit.getLastMessage();
         const dateParsed = (last_message) ? convertTimestamp(last_message.t) : 0;
 
+        getMessagesbyId( _unit, array_temp );
+        
+
         const unidad = {
                 name,
                 sensors,
@@ -54,7 +59,7 @@ export const getUnitsGroup = ( group, array_temp ) =>{
                 dateParsed,
                 icon, 
             };
-            array_temp.map( temp => {                
+            array_temp.map( temp => {   
                 const temperatura = (sensors.find(s => s.nombre === temp)) ? sensors.find(s => s.nombre === temp) : 'N/A';
                 if( temperatura ){
                     temps.push( { [temperatura.nombre]: temperatura.valor } )
@@ -75,27 +80,16 @@ export const getUnitsGroup = ( group, array_temp ) =>{
 }
 
 
-// export const getUnitsGroup = ( group ) => {
-//     return initUnit( group.getUnits() );
-// }
-
-
-// function initUnit(unitsGoups) {
-//     const units = {};
-//     unitsGoups.forEach( Element => {
-//         const unit = conexion.getItem( Element );
-//         if ( unit ) {
-//             const objeto = {
-//                 info: getInfo(unit),
-//                 sensors: getSensores(unit),
-//                 personalizados: getPersonalizados(unit),
-//                 gps: getGPS(unit),
-//             }
-//             getState( objeto );
-
-//             units[unit.getName()] = objeto;
-//         }
-        
-//     })
-//     return units;
-// }
+const getMessagesbyId = async ( unit, sensores ) =>{
+    const id = unit.getId();
+    const name = unit.getName();
+    const unit_messages = await MessagesService.loadMessagesToday( id );
+    // const unit_messages = await messageService.loadMessages(_unit.getId());
+    const { messages, count } = unit_messages;
+    
+    let sensorsByMessages = getSensorsValueByMessages(unit, messages, sensores); 
+    console.log( name );    
+    // console.log( sensores );
+    
+    console.log( sensorsByMessages );
+}

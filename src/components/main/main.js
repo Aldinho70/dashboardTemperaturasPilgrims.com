@@ -73,74 +73,183 @@ $(document).ready(function () {
 });
 
 export const htmlCreateCard = (data, filter = '') => {
-  $("#root-card").html('')
-  data.map(unit => {
-    
-    const _temperaturas = []
-    let class_temp = `temp-cold`
+  $("#root-card").html('');
 
-    GRUPOS_FILTER[filter].SENSOR.map( sensor => {
-        const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);  
-        if (sensorTemperatura) {
-          class_temp = GRUPOS_FILTER[filter].getState( sensorTemperatura.valor )
-          _temperaturas.push({ name: sensorTemperatura.nombre, subname: sensor, value : sensorTemperatura.valor})              
-        }          
-    })
-    
-    // switch (filter) {
-    //   case 'REPARTO':
-    //     GRUPOS_FILTER[filter].SENSOR.map( sensor => {
-    //       const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);  
-    //       class_temp = GRUPOS_FILTER[filter].getState( sensorTemperatura.valor )
-    //       _temperaturas.push({ name: sensorTemperatura.nombre, subname: sensor, value : sensorTemperatura.valor})
-    //     })
-    //   break;
-    //   case 'CAMARAS':
-    //     GRUPOS_FILTER[filter].SENSOR.map( sensor => {
-    //       const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);  
-    //       class_temp = GRUPOS_FILTER[filter].getState( sensorTemperatura.valor )
-    //       _temperaturas.push({ name: sensorTemperatura.nombre, subname: sensor, value : sensorTemperatura.valor})
-    //     })
-    //     break
-    //     case 'REFRIGERACION':
-    //       GRUPOS_FILTER[filter].SENSOR.map( sensor => {
-    //         const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);  
-    //         class_temp = GRUPOS_FILTER[filter].getState( sensorTemperatura.valor )
-    //         if (sensorTemperatura) {
-    //           _temperaturas.push({ name: sensorTemperatura.nombre, subname: sensor, value : sensorTemperatura.valor})              
-    //         }          
-    //     })
-    //   break;
-    //   default:
-    //     break;
-    // }
+  data.forEach((unit, unitIndex) => {
+    const _temperaturas = [];
+    let class_temp = `temp-cold`;
 
-      $('#root-card').append(`
-        <!-- Tarjeta Noria -->
-            <div class="col">
-              <div class="card shadow-lg border-0 rounded-4 bg-light ${class_temp} " }">
-                <div class="card-body">
-                  <h5 class="card-title fw-bold fs-5 text-light mb-2">
-                    <img src="${unit.icon}" alt="Icono" class="img-fluid rounded-circle " style="width: 45px; height: 45px; object-fit: cover;">
-                    <span class="text-light">${unit.name}</span>
-                  </h5>
-                  <p class="text-muted small mb-3">
-                    <i class="bi bi-clock me-1 text-light"></i> 
-                    <span class="text-light">Último mensaje: ${unit.dateParsed}</span>
-                  </p>
-                  ${ _temperaturas.map(temp => {
-                      return `
-                        <h6 class="text-light text-center">${temp.subname}</h6>
-                        <h1 class="text-light text-center">${(temp.value >= 200) ? `error: ${temp.value}` : `${temp.value} °C`} </h1>
-                      `;
-                    }).join('') }                  
-                </div>
-              </div>
+    GRUPOS_FILTER[filter].SENSOR.forEach(sensor => {
+      const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);
+      if (sensorTemperatura) {
+        class_temp = GRUPOS_FILTER[filter].getState(sensorTemperatura.valor);
+        _temperaturas.push({ 
+          name: sensorTemperatura.nombre, 
+          subname: sensor, 
+          value: sensorTemperatura.valor 
+        });
+      }
+    });
+
+    // Construir el HTML de la tarjeta
+    let cardHtml = `
+      <div class="col">
+        <div class="card bg-dark text-light shadow rounded-4 p-3 border-0 ${class_temp}">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center">
+              <img src="${unit.icon}" alt="Icono" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+              <h5 class="mb-0 fw-semibold">${unit.name}</h5>
             </div>
-        <!-- Repetir dinámicamente -->`);
-    }
-  )
-}
+            <div>
+              <i class="bi bi-thermometer-half fs-4 text-light"></i>
+            </div>
+          </div>
+
+          <p class="small text-secondary mb-3">
+            <i class="bi bi-clock me-1"></i> Último mensaje: ${unit.dateParsed}
+          </p>
+    `;
+
+    _temperaturas.forEach((temp, tempIndex) => {
+      // Crear ID único con índices si no hay ID disponible
+      const chartId = `chart-${unitIndex}-${tempIndex}`;
+
+      cardHtml += `
+        <div class="mb-4">
+          <h6 class="text-uppercase text-muted text-center small">${temp.subname}</h6>
+          <h2 class="text-center ${temp.value >= 200 ? 'text-danger' : 'text-light'} fw-bold">
+            ${temp.value >= 200 ? `Error: ${temp.value}` : `${temp.value} °C`}
+          </h2>
+          <div class="w-100" id="${chartId}" style="height: 150px; border-radius: 30px"></div>
+        </div>
+      `;
+
+      // 🔁 Programar la gráfica para renderizar después del append
+      setTimeout(() => {
+        const dataExample = [
+          { time: '00:00', temp: 22.5 },
+          { time: '03:00', temp: 23.0 },
+          { time: '06:00', temp: 23.3 },
+          { time: '09:00', temp: 24.0 },
+          { time: '12:00', temp: 24.6 },
+          { time: '15:00', temp: 24.2 },
+          { time: '18:00', temp: 23.7 },
+          { time: '21:00', temp: 23.2 }
+        ];
+
+        Highcharts.chart(chartId, {
+          chart: {
+            type: 'line',
+            backgroundColor: 'transparent'
+          },
+          title: { text: null },
+          xAxis: {
+            categories: dataExample.map(d => d.time),
+            labels: { style: { color: 'black' } }
+          },
+          yAxis: {
+            title: { text: '°C', style: { color: 'black' } },
+            labels: { style: { color: 'black' } }
+          },
+          series: [{
+            name: 'Temperatura',
+            data: dataExample.map(d => d.temp),
+            color: 'black'
+          }],
+          legend: { enabled: false },
+          credits: { enabled: false }
+        });
+      }, 0); // Garantiza que el DOM esté listo
+    });
+
+    cardHtml += `</div></div>`;
+    $('#root-card').append(cardHtml);
+  });
+};
+
+// export const htmlCreateCard = (data, filter = '') => {
+//   $("#root-card").html('')
+//   data.map(unit => {
+    
+//     const _temperaturas = []
+//     let class_temp = `temp-cold`
+
+//     GRUPOS_FILTER[filter].SENSOR.map( sensor => {
+//         const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);  
+//         if (sensorTemperatura) {
+//           class_temp = GRUPOS_FILTER[filter].getState( sensorTemperatura.valor )
+//           _temperaturas.push({ name: sensorTemperatura.nombre, subname: sensor, value : sensorTemperatura.valor})              
+//         }          
+//     })
+    
+//     // switch (filter) {
+//     //   case 'REPARTO':
+//     //     GRUPOS_FILTER[filter].SENSOR.map( sensor => {
+//     //       const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);  
+//     //       class_temp = GRUPOS_FILTER[filter].getState( sensorTemperatura.valor )
+//     //       _temperaturas.push({ name: sensorTemperatura.nombre, subname: sensor, value : sensorTemperatura.valor})
+//     //     })
+//     //   break;
+//     //   case 'CAMARAS':
+//     //     GRUPOS_FILTER[filter].SENSOR.map( sensor => {
+//     //       const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);  
+//     //       class_temp = GRUPOS_FILTER[filter].getState( sensorTemperatura.valor )
+//     //       _temperaturas.push({ name: sensorTemperatura.nombre, subname: sensor, value : sensorTemperatura.valor})
+//     //     })
+//     //     break
+//     //     case 'REFRIGERACION':
+//     //       GRUPOS_FILTER[filter].SENSOR.map( sensor => {
+//     //         const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);  
+//     //         class_temp = GRUPOS_FILTER[filter].getState( sensorTemperatura.valor )
+//     //         if (sensorTemperatura) {
+//     //           _temperaturas.push({ name: sensorTemperatura.nombre, subname: sensor, value : sensorTemperatura.valor})              
+//     //         }          
+//     //     })
+//     //   break;
+//     //   default:
+//     //     break;
+//     // }
+
+//       $('#root-card').append(`
+//         <!-- Tarjeta Noria -->
+//           <div class="col">
+//             <div class="card bg-dark text-light shadow rounded-4 p-3 border-0 ${class_temp}">
+//               <div class="d-flex justify-content-between align-items-center mb-3">
+//                 <div class="d-flex align-items-center">
+//                   <img src="${unit.icon}" alt="Icono" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+//                   <h5 class="mb-0 fw-semibold">${unit.name}</h5>
+//                 </div>
+//                 <div>
+//                   <i class="bi bi-thermometer-half fs-4 text-light"></i>
+//                 </div>
+//               </div>
+
+//               <p class="small text-secondary mb-3">
+//                 <i class="bi bi-clock me-1"></i> Último mensaje: ${unit.dateParsed}
+//               </p>
+
+//               ${_temperaturas.map(temp => {
+//                 const isError = temp.value >= 200;
+//                 return `
+//                   <div class="mb-3">
+//                     <h6 class="text-uppercase text-muted text-center small">${temp.subname}</h6>
+//                     <h2 class="text-center ${isError ? 'text-danger' : 'text-light'} fw-bold">
+//                       ${isError ? `Error: ${temp.value}` : `${temp.value} °C`}
+//                     </h2>
+//                   </div>
+//                 `;
+//               }).join('')}
+              
+//               <!-- Puedes poner una gráfica o líneas aquí si decides agregar Chart.js -->
+//               <div class="chart-placeholder bg-light mt-3" style="height: 80px; border-radius: 8px;" id="chart-${unit.id}-${temp.subname}">
+//                 <!-- Aquí va el canvas de Chart.js si decides usarlo -->
+//               </div>
+//             </div>
+//           </div>
+//         <!-- Repetir dinámicamente -->`);
+//     }
+//   )
+// }
 
 export const htmListCard = (data, name, total = 0) => {
   $('#root-list-card').html('');

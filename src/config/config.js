@@ -11,7 +11,7 @@ export const GRUPOS_FILTER = {
         GRUPOS: ['PILGRIMS GP REPARTO', 'PILGRIMS DGO REPARTO', 'PILGRIMS MTY REPARTO', 'PILGRIMS CHIH. REPARTO' ],
         SENSOR: ['TEMPERATURA DASHBOARD'],
         getState: (temp) => {
-            return ( temp >= 200) ? 'temp-hot' : 'temp-cold'
+            return ( temp >= 200) ? 'temp-hot' : (temp < 5) ? 'temp-cold' : 'temp-normal'
         }
     },
     'CAMARAS':{

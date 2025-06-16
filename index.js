@@ -110,12 +110,13 @@ const htmlCreatedCardsByGroups = ( name_group, filter ) =>{
     filter_now = filter;
     const _units = []
     const units = allUnits_groups[name_group] 
+    
     for (const key in units.units_temp.general) {
         if (Object.prototype.hasOwnProperty.call(units.units_temp.general, key)) {
             const element = units.units_temp.general[key];
              _units.push(element.unidad);            
         }
-    }htmlCreateCard(_units, filter)
+    }htmlCreateCard( units, _units, filter)
 }
 
 window.htmlCreatedCardsByGroups = htmlCreatedCardsByGroups;
@@ -125,4 +126,5 @@ iniciarWialon();
 setInterval(() => {
   wialonSDK.logout(TOKEN) // ejecución cada 10 segundos
   htmlCreatedCardsByGroups(name_group_now, filter_now)
+  $('#root-fecha').text(`Ultima actualizacion: ${getFechaActual()}`)
 }, 1 * 60 * 1000);

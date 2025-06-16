@@ -4,7 +4,16 @@ import { GRUPOS_FILTER } from '../../config/config.js';
 
 $(document).ready(function () {
   $('#mainContent').html(`
-    <span class="text-light" id="root-fecha" >Ultima actualizacion: ${getFechaActual()}<span>
+    
+    <center>
+        <div id="loading" class="p-5">
+        <img src="./src/img/logojd.png" alt="Cargando..." /><br>
+        
+        <h1 class="text-dark">Cargando informacion...</h1>
+        </div>
+    </center>
+    
+    <h6 class="text-light" id="root-fecha" >Ultima actualizacion: ${getFechaActual()}<h6>
     <!-- root-notification-->
       <div class="accordion" id="accordionNotificaciones">
         <div class="accordion-item">
@@ -44,13 +53,24 @@ $(document).ready(function () {
       <!--Card info-->
       <div class="row" id="root-card-info"></div>
       <!--Card-->
-      <h2 class="mb-4 text-light"> Panel de temperaturas</h2>
+      <div class="d-flex align-items-center gap-3 mb-4">
+        <img 
+          src="https://c0.klipartz.com/pngpicture/994/729/gratis-png-cartel-de-signo-de-exclamacion-icono-de-exclamacion.png" 
+          alt="Icono" 
+          class="img-fluid rounded-circle" 
+          id="root-icon-group"
+          style="width: 35px; height: 35px; object-fit: cover;"
+        >
+        <h2 class="mb-0 text-light" id="root-categori">Panel de temperaturas</h2>
+      </div>
+
       <hr class="text-light">      
       <!--Card norias-->
-      <div class="row row-cols-1 row-cols-md-3 g-4" id="root-card"></div>
+      <div class="row row-cols-1 row-cols-md-3 g-4 overflow-auto" id="root-card" style="max-height: 74vh;"></div>
       <!--Card-->
     </div>
     <div class="container py-4 d-none" id="root-main-2">
+      <img src="https://c0.klipartz.com/pngpicture/994/729/gratis-png-cartel-de-signo-de-exclamacion-icono-de-exclamacion.png" alt="Icono" class="img-fluid rounded-circle " style="width: 50px; height: 50px; object-fit: cover;">
       <h2 class="mb-4 text-light" id="root-categori" >Panel de temperaturas</h2>
       <div class="accordion overflow-auto" id="root-list-card" style="max-height: 500px;"></div>
     </div>
@@ -70,12 +90,15 @@ $(document).ready(function () {
       </div>
     <!--modal-notification-->
 `);
+  $("#loading").fadeIn();
 });
 
-export const htmlCreateCard = (data, filter = '') => {
+export const htmlCreateCard = (info_groups = {}, data, filter = '') => {
   $("#root-card").html('');
+  $("#root-categori").text(info_groups.info.nameGroup);
+  $('#root-icon-group').attr('src', info_groups.info.icon);
   data.forEach((unit, unitIndex) => {
-    console.log(unit.tempsToday);
+    // console.log((unit));
     
     const _temperaturas = [];
     let class_temp = `temp-cold`;
@@ -106,7 +129,7 @@ export const htmlCreateCard = (data, filter = '') => {
             </div>
           </div>
 
-          <p class="small text-secondary mb-3">
+          <p class="small text-ligth mb-3">
             <i class="bi bi-clock me-1"></i> Último mensaje: ${unit.dateParsed}
           </p>
     `;
@@ -114,30 +137,22 @@ export const htmlCreateCard = (data, filter = '') => {
     _temperaturas.forEach((temp, tempIndex) => {
       // Crear ID único con índices si no hay ID disponible
       const chartId = `chart-${unitIndex}-${tempIndex}`;
-
       cardHtml += `
         <div class="mb-4">
-          <h6 class="text-uppercase text-muted text-center small">${temp.subname}</h6>
-          <h2 class="text-center ${temp.value >= 200 ? 'text-danger' : 'text-light'} fw-bold">
-            ${temp.value >= 200 ? `Error: ${temp.value}` : `${temp.value} °C`}
+          <h6 class="text-uppercase  text-center small text-light">${temp.subname}</h6>
+          <h2 class="text-center ${temp.value >= 200 ? 'text-light' : 'text-light'} fw-bold">
+            ${temp.value >= 200 ? `Error: ${temp.value}⁉️` : `${temp.value} °C`}
           </h2>
-          <div class="w-100" id="${chartId}" style="height: 150px; border-radius: 30px"></div>
+          <div class="w-100" id="${chartId}" style="height: 150px; border-radius: 30px">
+            <h2 class="text-center text-light fw-bold">
+              La unidad no presenta historial
+            </h2>
+          </div>
         </div>
       `;
 
       // 🔁 Programar la gráfica para renderizar después del append
       setTimeout(() => {
-        console.log(unit.tempsToday[temp.subname].tiempos);
-        const dataExample = [
-          { time: '00:00', temp: 22.5 },
-          { time: '03:00', temp: 23.0 },
-          { time: '06:00', temp: 23.3 },
-          { time: '09:00', temp: 24.0 },
-          { time: '12:00', temp: 24.6 },
-          { time: '15:00', temp: 24.2 },
-          { time: '18:00', temp: 23.7 },
-          { time: '21:00', temp: 23.2 }
-        ];
 
         Highcharts.chart(chartId, {
           chart: {
@@ -148,17 +163,25 @@ export const htmlCreateCard = (data, filter = '') => {
           xAxis: {
             // categories: dataExample.map(d => d.time),
             categories: unit.tempsToday[temp.subname].tiempos,
-            labels: { style: { color: 'black' } }
+            labels: { style: { color: 'white' } }
           },
           yAxis: {
-            title: { text: '°C', style: { color: 'black' } },
-            labels: { style: { color: 'black' } }
+            title: { text: '°C', style: { color: 'white' } },
+            labels: { style: { color: 'white' } }
+          },
+          tooltip: {
+            backgroundColor: '#333',
+            borderColor: '#888',
+            style: { color: 'white' },
+            formatter: function () {
+              return `<b>Temperatura:</b> ${this.y} °C<br><b>Hora:</b> ${this.key}`;
+            }
           },
           series: [{
             name: 'Temperatura',
             // data: dataExample.map(d => d.temp),
             data: unit.tempsToday[temp.subname].valores,
-            color: 'black'
+            color: 'white'
           }],
           legend: { enabled: false },
           credits: { enabled: false }
@@ -170,90 +193,6 @@ export const htmlCreateCard = (data, filter = '') => {
     $('#root-card').append(cardHtml);
   });
 };
-
-// export const htmlCreateCard = (data, filter = '') => {
-//   $("#root-card").html('')
-//   data.map(unit => {
-    
-//     const _temperaturas = []
-//     let class_temp = `temp-cold`
-
-//     GRUPOS_FILTER[filter].SENSOR.map( sensor => {
-//         const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);  
-//         if (sensorTemperatura) {
-//           class_temp = GRUPOS_FILTER[filter].getState( sensorTemperatura.valor )
-//           _temperaturas.push({ name: sensorTemperatura.nombre, subname: sensor, value : sensorTemperatura.valor})              
-//         }          
-//     })
-    
-//     // switch (filter) {
-//     //   case 'REPARTO':
-//     //     GRUPOS_FILTER[filter].SENSOR.map( sensor => {
-//     //       const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);  
-//     //       class_temp = GRUPOS_FILTER[filter].getState( sensorTemperatura.valor )
-//     //       _temperaturas.push({ name: sensorTemperatura.nombre, subname: sensor, value : sensorTemperatura.valor})
-//     //     })
-//     //   break;
-//     //   case 'CAMARAS':
-//     //     GRUPOS_FILTER[filter].SENSOR.map( sensor => {
-//     //       const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);  
-//     //       class_temp = GRUPOS_FILTER[filter].getState( sensorTemperatura.valor )
-//     //       _temperaturas.push({ name: sensorTemperatura.nombre, subname: sensor, value : sensorTemperatura.valor})
-//     //     })
-//     //     break
-//     //     case 'REFRIGERACION':
-//     //       GRUPOS_FILTER[filter].SENSOR.map( sensor => {
-//     //         const sensorTemperatura = unit.sensors.find(s => s.nombre === sensor);  
-//     //         class_temp = GRUPOS_FILTER[filter].getState( sensorTemperatura.valor )
-//     //         if (sensorTemperatura) {
-//     //           _temperaturas.push({ name: sensorTemperatura.nombre, subname: sensor, value : sensorTemperatura.valor})              
-//     //         }          
-//     //     })
-//     //   break;
-//     //   default:
-//     //     break;
-//     // }
-
-//       $('#root-card').append(`
-//         <!-- Tarjeta Noria -->
-//           <div class="col">
-//             <div class="card bg-dark text-light shadow rounded-4 p-3 border-0 ${class_temp}">
-//               <div class="d-flex justify-content-between align-items-center mb-3">
-//                 <div class="d-flex align-items-center">
-//                   <img src="${unit.icon}" alt="Icono" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
-//                   <h5 class="mb-0 fw-semibold">${unit.name}</h5>
-//                 </div>
-//                 <div>
-//                   <i class="bi bi-thermometer-half fs-4 text-light"></i>
-//                 </div>
-//               </div>
-
-//               <p class="small text-secondary mb-3">
-//                 <i class="bi bi-clock me-1"></i> Último mensaje: ${unit.dateParsed}
-//               </p>
-
-//               ${_temperaturas.map(temp => {
-//                 const isError = temp.value >= 200;
-//                 return `
-//                   <div class="mb-3">
-//                     <h6 class="text-uppercase text-muted text-center small">${temp.subname}</h6>
-//                     <h2 class="text-center ${isError ? 'text-danger' : 'text-light'} fw-bold">
-//                       ${isError ? `Error: ${temp.value}` : `${temp.value} °C`}
-//                     </h2>
-//                   </div>
-//                 `;
-//               }).join('')}
-              
-//               <!-- Puedes poner una gráfica o líneas aquí si decides agregar Chart.js -->
-//               <div class="chart-placeholder bg-light mt-3" style="height: 80px; border-radius: 8px;" id="chart-${unit.id}-${temp.subname}">
-//                 <!-- Aquí va el canvas de Chart.js si decides usarlo -->
-//               </div>
-//             </div>
-//           </div>
-//         <!-- Repetir dinámicamente -->`);
-//     }
-//   )
-// }
 
 export const htmListCard = (data, name, total = 0) => {
   $('#root-list-card').html('');
@@ -318,3 +257,10 @@ export const htmListCard = (data, name, total = 0) => {
     }
   }
 };
+
+function getLoading(tag) {
+    $(tag).fadeIn();
+    // setTimeout(() => {
+    //     $(tag).fadeOut();
+    // }, 3000);
+}

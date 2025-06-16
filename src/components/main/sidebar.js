@@ -3,8 +3,8 @@ import { allUnits_groups } from "../../../index.js";
 
 $(document).ready(function () { 
     $('#sidebar').html(`
-    <button id="openBtn" class="btn btn-primary position-fixed top-0 start-0 m-2" style="z-index: 1040; display: none;">
-        <i class="bi bi-chevron-right"></i>
+    <button id="openBtn" class="btn btn-warning position-fixed top-0 start-0 m-2" style="z-index: 1040; display: none;">
+        <i class="bi bi-chevron-right"></i> Abrir panel de grupos
     </button>
 
     <div class="p-1 border-bottom">
@@ -37,4 +37,5 @@ export const htmlCreatedModuleGroups = ( data ) => {
             `)
         }
     }
+    $("#loading").fadeOut();
 }
